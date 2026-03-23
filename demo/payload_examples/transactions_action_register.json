@@ -1,0 +1,5 @@
+{
+  "action_id": "freeze_account",
+  "description": "Freeze a checking account flagged for fraud",
+  "sql": "UPDATE accounts SET frozen = true, frozen_at = NOW() WHERE account_id = :account_id RETURNING account_id"
+}

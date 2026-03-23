@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package alloynative.v1;
+
+import "google/protobuf/struct.proto";
+
+service AlloyNative {
+  rpc Upsert(UpsertRequest) returns (UpsertResponse);
+  rpc Search(SearchRequest) returns (SearchResponse);
+}
+
+message UpsertRow {
+  google.protobuf.Struct fields = 1;
+}
+
+message UpsertRequest {
+  string table = 1;
+  repeated UpsertRow rows = 2;
+  string embedding_source_column = 3;
+  string embedding_model = 4;
+  string embedding_column = 5;
+  string id_column = 6;
+}
+
+message UpsertResponse {
+  int32 count = 1;
+  repeated string ids = 2;
+}
+
+message SearchRequest {
+  string table = 1;
+  string query = 2;
+  google.protobuf.Struct filters = 3;
+  int32 limit = 4;
+  bool rerank = 5;
+  string embedding_model = 6;
+  string rerank_model = 7;
+  string id_column = 8;
+  repeated string text_columns = 9;
+  string metadata_column = 10;
+  repeated string return_columns = 11;
+  string embedding_column = 12;
+  int32 candidate_limit = 13;
+  google.protobuf.Struct join_filter = 14;
+  string join_table = 15;
+  string left_join_column = 16;
+  string right_join_column = 17;
+}
+
+message SearchResult {
+  string id = 1;
+  string content = 2;
+  google.protobuf.Struct payload = 3;
+  google.protobuf.Struct metadata = 4;
+  double score = 5;
+  double distance = 6;
+}
+
+message SearchResponse {
+  repeated SearchResult results = 1;
+  bool reranked = 2;
+  int32 candidate_count = 3;
+}

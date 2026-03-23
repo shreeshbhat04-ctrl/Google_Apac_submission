@@ -1,0 +1,6 @@
+{
+  "action_id": "freeze_account",
+  "params": {
+    "account_id": "acc_8821"
+  }
+}

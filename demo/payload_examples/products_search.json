@@ -1,0 +1,14 @@
+{
+  "table": "products",
+  "query": "comfortable running shoes",
+  "filters": {
+    "category": "shoes",
+    "price__lte": 100
+  },
+  "text_columns": ["name", "description"],
+  "metadata_column": "metadata",
+  "return_columns": ["name", "category", "price"],
+  "embedding_column": "embedding",
+  "limit": 5,
+  "rerank": false
+}

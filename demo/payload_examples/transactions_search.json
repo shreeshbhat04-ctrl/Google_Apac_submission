@@ -1,0 +1,13 @@
+{
+  "table": "transactions",
+  "query": "suspicious large withdrawal unusual location",
+  "filters": {
+    "amount__gte": 10000,
+    "account_type": "checking"
+  },
+  "text_columns": ["merchant_name", "description"],
+  "return_columns": ["account_id", "amount", "timestamp", "merchant_name"],
+  "embedding_column": "embedding",
+  "limit": 5,
+  "rerank": true
+}

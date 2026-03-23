@@ -1,0 +1,21 @@
+[project]
+name = "alloynative"
+version = "0.1.0"
+description = "AlloyNative Python SDK for AlloyDB in-database embeddings, hybrid search, and reranking."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "google-auth>=2.0.0",
+    "google-cloud-alloydb-connector[asyncpg]>=1.2.0",
+    "sqlalchemy>=2.0.0",
+]
+
+[project.optional-dependencies]
+test = []
+
+[build-system]
+requires = ["setuptools>=68.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["alloynative"]

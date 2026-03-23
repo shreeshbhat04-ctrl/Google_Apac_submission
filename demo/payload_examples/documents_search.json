@@ -1,0 +1,14 @@
+{
+  "table": "documents",
+  "query": "patient chest pain symptoms ST elevation",
+  "filters": {
+    "department": "cardiology",
+    "created_at__gte": "2024-01-01"
+  },
+  "text_columns": ["title", "body"],
+  "metadata_column": "metadata",
+  "return_columns": ["title", "author", "department", "created_at"],
+  "embedding_column": "embedding",
+  "limit": 10,
+  "rerank": true
+}

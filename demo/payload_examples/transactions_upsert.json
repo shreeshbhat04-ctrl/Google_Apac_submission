@@ -1,0 +1,21 @@
+{
+  "table": "transactions",
+  "rows": [
+    {
+      "id": "txn_001",
+      "account_id": "acc_8821",
+      "merchant_name": "ATM Withdrawal",
+      "description": "Large cash withdrawal at 2am outside usual geography",
+      "amount": 15000.0,
+      "account_type": "checking",
+      "timestamp": "2024-03-15T02:14:00Z",
+      "metadata": {
+        "country": "SG",
+        "flagged": false
+      }
+    }
+  ],
+  "embedding_source_column": "description",
+  "embedding_column": "embedding",
+  "id_column": "id"
+}

@@ -1,0 +1,30 @@
+{
+  "table": "products",
+  "rows": [
+    {
+      "id": 1,
+      "name": "Lightweight Running Shoe",
+      "description": "Breathable daily trainer for road running",
+      "category": "shoes",
+      "price": 79.99,
+      "metadata": {
+        "brand": "demo",
+        "color": "blue"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Trail Running Shoe",
+      "description": "Rugged grip for off-road terrain and mud",
+      "category": "shoes",
+      "price": 94.99,
+      "metadata": {
+        "brand": "demo",
+        "color": "grey"
+      }
+    }
+  ],
+  "embedding_source_column": "description",
+  "embedding_column": "embedding",
+  "id_column": "id"
+}

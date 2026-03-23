@@ -1,0 +1,33 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: alloynative
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/cpu-throttling: "false"
+        autoscaling.knative.dev/minScale: "1"
+        run.googleapis.com/network-interfaces: >
+          [{"network":"easy-alloydb-vpc","subnetwork":"easy-alloydb-subnet"}]
+        run.googleapis.com/vpc-access-egress: all-traffic
+    spec:
+      containers:
+        - image: REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/alloynative:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: ALLOYNATIVE_PROJECT_ID
+              value: "mystical-app-490317"
+            - name: ALLOYNATIVE_REGION
+              value: "us-central1"
+            - name: ALLOYNATIVE_CLUSTER
+              value: "my-alloydb-cluster"
+            - name: ALLOYNATIVE_INSTANCE
+              value: "my-primary-inst"
+            - name: ALLOYNATIVE_DATABASE
+              value: "my_application_db"
+            - name: ALLOYNATIVE_IP_TYPE
+              value: "PRIVATE"
