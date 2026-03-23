@@ -76,12 +76,12 @@ class SQLBuilderTest(TestCase):
             limit=5,
             embedding_model="text-embedding-005",
             rerank=True,
-            rerank_model="gemini_flash_model",
+            rerank_model="gemini-2.0-flash-global",
         )
 
         self.assertIn("google_ml.predict_row(", statement.sql)
         self.assertIn("::jsonb -> 0 -> 'candidates'", statement.sql)
-        self.assertEqual(statement.params["rerank_model"], "gemini_flash_model")
+        self.assertEqual(statement.params["rerank_model"], "gemini-2.0-flash-global")
 
     def test_build_upsert_rows_statement_supports_arbitrary_schema(self) -> None:
         statement = build_upsert_rows_statement(

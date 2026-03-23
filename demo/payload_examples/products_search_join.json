@@ -1,0 +1,20 @@
+{
+  "table": "products",
+  "query": "comfortable running shoes",
+  "filters": {
+    "category": "shoes",
+    "price__lte": 100
+  },
+  "join_table": "inventory",
+  "left_join_column": "id",
+  "right_join_column": "product_id",
+  "join_filter": {
+    "stock__gt": 0
+  },
+  "text_columns": ["name", "description"],
+  "metadata_column": "metadata",
+  "return_columns": ["name", "category", "price"],
+  "embedding_column": "embedding",
+  "limit": 5,
+  "rerank": false
+}

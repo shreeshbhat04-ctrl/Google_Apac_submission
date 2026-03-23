@@ -51,7 +51,7 @@ export class AlloyDBClient {
     this.defaultEmbeddingModel =
       options.defaultEmbeddingModel ?? "text-embedding-005";
     this.defaultRerankModel =
-      options.defaultRerankModel ?? "gemini_flash_model";
+      options.defaultRerankModel ?? "gemini-2.0-flash-global";
   }
 
   static async connect(options: AlloyDBClientOptions): Promise<AlloyDBClient> {

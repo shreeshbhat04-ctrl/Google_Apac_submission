@@ -9,5 +9,6 @@
   "return_columns": ["account_id", "amount", "timestamp", "merchant_name"],
   "embedding_column": "embedding",
   "limit": 5,
-  "rerank": true
+  "rerank": false,
+  "rerank_model": "gemini-2.0-flash-global"
 }

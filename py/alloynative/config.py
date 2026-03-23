@@ -39,7 +39,7 @@ class AlloyDBConfig:
     enable_iam_auth: bool = True
     refresh_strategy: str = "LAZY"
     default_embedding_model: str = "text-embedding-005"
-    default_rerank_model: str = "gemini_flash_model"
+    default_rerank_model: str = "gemini-2.0-flash-global"
     require_model_support: bool = True
     require_ai_query_engine: bool = True
     pool_size: int = 5

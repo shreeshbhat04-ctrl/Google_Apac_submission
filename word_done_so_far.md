@@ -144,3 +144,28 @@ Live-validation update:
 - Added `docs/live_comparison_checklist.md` with a step-by-step AlloyDB vs Pinecone validation flow
 - Added a README section clarifying exactly what AlloyNative simplifies and where infrastructure work still remains
 -->
+
+<!--
+Live AlloyDB proof update:
+- Verified live SDK connectivity from Cloud Shell against the current AlloyDB cluster
+- Verified runtime capability detection: pgvector present, ScaNN absent, preferred index type `ivfflat`
+- Verified live `products` upsert and `AlloyIndex.query(...)` end to end
+- Added `docs/alloydb_results_summary.md` to record the first successful live AlloyNative result and the exact next tests
+- Fixed live-discovered SDK issues:
+  - string `ip_type` normalization in `aconnect(...)`
+  - JSONB serialization in `upsert_rows(...)`
+-->
+
+<!--
+Live join proof update:
+- Recorded the live negative-case join result where the join-aware query returned `Result count: 0`
+- This confirms the retrieval result set is constrained by live relational state, not just semantic similarity
+-->
+
+<!--
+Demo-completion update:
+- Replaced placeholder demo files with runnable fabricated-data demos for Cymbal Shops and fraud workflows
+- Added graceful rerank fallback so `google_ml.predict_row(...)` issues no longer block the full project demo
+- Updated `.env.example`, Cloud Run manifest, deployment docs, and payload examples to the current `mystical-app-490317-v0` / `us-east4` / `mytest` environment
+- Switched the default rerank model placeholder to `gemini-2.0-flash-global` across Python and TypeScript
+-->

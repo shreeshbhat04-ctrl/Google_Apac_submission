@@ -44,12 +44,15 @@ What is verified offline:
 - proto generation
 - REST endpoint flows in mock mode
 
+What is now verified live:
+- AlloyDB connection through the Python SDK
+- capability detection for pgvector / ScaNN availability
+- live product upsert with in-database embedding generation
+- live product retrieval through `AlloyIndex`
+- live join-constrained negative case through the AlloyNative query path
+
 What still needs a live AlloyDB cluster:
-- real connection verification against the current code
-- real embedding writes
-- real hybrid search behavior
-- real join-aware search behavior
-- real rerank behavior through the running server
+- optional rerank validation for the chosen `google_ml.predict_row(...)` model
 - Cloud Run deployment verification
 
 ## REST-First Submission Scope
@@ -150,15 +153,18 @@ In mock mode:
 - join-aware search works against in-memory related tables
 - action endpoints still work for request-flow testing
 
+For live demos with fabricated data, see [demo/README.md](c:\Users\shree\google_submission\p1\demo\README.md). The fraud demo will fall back to hybrid-only search if rerank is not ready on the cluster.
+
 ## Suggested Reading Order
 
 1. [LEARNINGS.md](c:\Users\shree\google_submission\p1\LEARNINGS.md)
 2. [docs/cluster_snapshot.md](c:\Users\shree\google_submission\p1\docs\cluster_snapshot.md)
 3. [docs/pinecone_results_summary.md](c:\Users\shree\google_submission\p1\docs\pinecone_results_summary.md)
-4. [docs/api_examples.md](c:\Users\shree\google_submission\p1\docs\api_examples.md)
-5. [docs/filter_behavior.md](c:\Users\shree\google_submission\p1\docs\filter_behavior.md)
-6. [docs/live_comparison_checklist.md](c:\Users\shree\google_submission\p1\docs\live_comparison_checklist.md)
-7. [docs/testing_with_postman.md](c:\Users\shree\google_submission\p1\docs\testing_with_postman.md)
+4. [docs/alloydb_results_summary.md](c:\Users\shree\google_submission\p1\docs\alloydb_results_summary.md)
+5. [docs/api_examples.md](c:\Users\shree\google_submission\p1\docs\api_examples.md)
+6. [docs/filter_behavior.md](c:\Users\shree\google_submission\p1\docs\filter_behavior.md)
+7. [docs/live_comparison_checklist.md](c:\Users\shree\google_submission\p1\docs\live_comparison_checklist.md)
+8. [docs/testing_with_postman.md](c:\Users\shree\google_submission\p1\docs\testing_with_postman.md)
 
 ## Quick API Flow
 

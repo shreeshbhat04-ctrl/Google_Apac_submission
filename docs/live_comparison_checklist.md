@@ -132,6 +132,12 @@ This is the SQL-level proof that AlloyNative’s join-aware query story maps to 
 
 Use the SDK in a one-off script or REPL.
 
+Current milestone:
+- basic live `AlloyIndex` connect + upsert + query has already been proven against the live cluster
+- join-aware negative-case proof has also been observed live (`Result count: 0`)
+- the repo now includes fabricated live demos that create their own tables and seed data
+- reranking should be treated as optional until the chosen model is confirmed through `google_ml.model_info_view`
+
 ### Products / joins
 
 ```python
@@ -191,6 +197,7 @@ async def main():
         "suspicious large withdrawal unusual location",
         filters={"amount__gte": 10000, "account_type": "checking"},
         rerank=True,
+        rerank_model="gemini-2.0-flash-global",
     )
     print(results)
     await index.close()
@@ -288,3 +295,21 @@ Add the AlloyDB side as a sibling document once you finish:
 6. prove REST API
 7. compare notes against Pinecone
 8. record the demo
+
+## 9. Current Live Progress
+
+Completed:
+- live SDK connect
+- capability detection
+- live `products` upsert
+- live `products` query
+- live join-aware negative case (`Result count: 0`)
+
+Recorded in:
+- [alloydb_results_summary.md](c:\Users\shree\google_submission\p1\docs\alloydb_results_summary.md)
+
+Next:
+- run [demo/cymbal_shops_demo.py](c:\Users\shree\google_submission\p1\demo\cymbal_shops_demo.py) for the fully scripted join demo
+- run [demo/fraud_workflow_demo.py](c:\Users\shree\google_submission\p1\demo\fraud_workflow_demo.py) for the fabricated fraud workflow
+- run REST proof
+- deploy Cloud Run with the updated manifest

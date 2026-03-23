@@ -16,16 +16,33 @@ Local development is easiest with:
 
 ## Cloud Run
 
-The current manifest is a template-level starting point.
+The manifest now matches the live AlloyDB environment used during validation:
 
-Before a real deployment you should verify:
-- image registry path
-- VPC config
-- project, region, cluster, instance, and database env vars
-- whether you want a proxy sidecar or direct connector path
+- project: `mystical-app-490317-v0`
+- region: `us-east4`
+- cluster: `mytest`
+- instance: `mytest-primary`
+- database: `my_application_db`
+- VPC network/subnet: `default`
+- runtime service account: `alloynative-run@mystical-app-490317-v0.iam.gserviceaccount.com`
 
-## What Still Needs Live Verification
+Before deploying, verify:
+- the Artifact Registry repo path in [service.yaml](c:\Users\shree\google_submission\p1\server\service.yaml)
+- that the Cloud Run service account exists and has `roles/alloydb.client`
+- that the same principal exists as an AlloyDB IAM database user
+- that `vector` and `google_ml_integration` are installed in `my_application_db`
 
-- real container boot against a running AlloyDB instance
-- real Cloud Run startup and shutdown behavior
-- IAM and VPC connectivity in the deployed environment
+Suggested deployment flow:
+
+```bash
+gcloud config set project mystical-app-490317-v0
+gcloud builds submit p1/server \
+  --tag us-east4-docker.pkg.dev/mystical-app-490317-v0/alloynative/alloynative:latest
+
+gcloud run services replace p1/server/service.yaml \
+  --region us-east4
+```
+
+## Rerank Note
+
+Hybrid search is the reliable baseline. LLM reranking depends on the model IDs available in `google_ml.model_info_view` for your cluster. The manifest and demos default to `gemini-2.0-flash-global`, but the runtime can override this per request with `rerank_model`.
