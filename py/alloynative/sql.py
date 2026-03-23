@@ -261,8 +261,13 @@ def build_upsert_rows_statement(
         row_placeholders: list[str] = []
         for column_index, column_name in enumerate(first_row_keys):
             param_name = f"row_{row_index}_{column_index}"
-            params[param_name] = row[column_name]
-            row_placeholders.append(f":{param_name}")
+            value = row[column_name]
+            if isinstance(value, (Mapping, list, tuple)):
+                params[param_name] = json.dumps(value)
+                row_placeholders.append(f"CAST(:{param_name} AS jsonb)")
+            else:
+                params[param_name] = value
+                row_placeholders.append(f":{param_name}")
         source_param = f"row_{row_index}_{first_row_keys.index(embedding_source_column)}"
         row_placeholders.append(
             f"google_ml.embedding(:embedding_model, :{source_param})::vector"

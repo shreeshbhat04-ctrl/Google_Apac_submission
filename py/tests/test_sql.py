@@ -93,6 +93,7 @@ class SQLBuilderTest(TestCase):
                     "description": "Lightweight trainer",
                     "category": "shoes",
                     "price": 79.99,
+                    "metadata": {"brand": "demo"},
                 }
             ],
             embedding_source_column="description",
@@ -105,6 +106,11 @@ class SQLBuilderTest(TestCase):
         self.assertIn("google_ml.embedding(:embedding_model, :row_0_2)::vector", statement.sql)
         self.assertIn("ON CONFLICT (\"id\") DO UPDATE SET", statement.sql)
         self.assertEqual(statement.params["row_0_2"], "Lightweight trainer")
+        self.assertEqual(
+            statement.params["row_0_5"],
+            '{"brand": "demo"}',
+        )
+        self.assertIn("CAST(:row_0_5 AS jsonb)", statement.sql)
 
     def test_build_search_hybrid_statement_requires_explicit_join_columns(self) -> None:
         with self.assertRaisesRegex(Exception, "left_join_column and right_join_column"):
