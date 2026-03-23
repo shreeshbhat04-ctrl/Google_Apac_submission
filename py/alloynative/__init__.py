@@ -2,7 +2,7 @@
 
 from .capabilities import CapabilitySnapshot
 from .client import AlloyDBClient
-from .config import AlloyDBConfig, IPType
+from .config import AlloyDBConfig, IPType, coerce_ip_type
 from .errors import (
     AlloyNativeAuthError,
     AlloyNativeConfigurationError,
@@ -24,6 +24,7 @@ __all__ = [
     "AlloyDBConfig",
     "CapabilitySnapshot",
     "IPType",
+    "coerce_ip_type",
     "AlloyNativeError",
     "AlloyNativeConfigurationError",
     "AlloyNativeAuthError",

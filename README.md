@@ -60,6 +60,42 @@ AlloyNative is submission-scoped as a REST-first product.
 - REST is the primary runtime and demo path
 - gRPC remains optional as a shared contract and adapter layer, not a required transport for AlloyDB itself
 
+## What AlloyNative Actually Simplifies
+
+AlloyNative does not replace infrastructure provisioning. You still need to:
+- create the AlloyDB cluster and instance
+- configure networking and IAM
+- enable extensions and required database flags
+- deploy the server runtime
+
+What AlloyNative simplifies is everything after the database exists:
+
+- no hand-written `google_ml.embedding(...)` insert SQL for every table
+- no hand-written BM25 + vector + RRF query construction
+- no hand-written `google_ml.predict_row(...)` rerank SQL
+- no custom request-shaping glue across Python, TypeScript, REST, and MCP-style tool wrappers
+- no separate app-side orchestration for join-constrained retrieval patterns
+
+That turns AlloyDB from "powerful but SQL-heavy" into "usable as an application-facing retrieval platform".
+
+The practical developer experience becomes:
+
+```python
+index = await AlloyIndex.aconnect(...)
+await index.upsert(rows)
+results = await index.query(
+    "running shoes",
+    filters={"category": "shoes"},
+    join_table="inventory",
+    left_join_column="id",
+    right_join_column="product_id",
+    join_filter={"stock__gt": 0},
+    rerank=True,
+)
+```
+
+instead of repeatedly hand-authoring vector SQL, filter SQL, rerank SQL, and API translation code.
+
 ## Friendly Index Surface
 
 ```python
@@ -121,7 +157,8 @@ In mock mode:
 3. [docs/pinecone_results_summary.md](c:\Users\shree\google_submission\p1\docs\pinecone_results_summary.md)
 4. [docs/api_examples.md](c:\Users\shree\google_submission\p1\docs\api_examples.md)
 5. [docs/filter_behavior.md](c:\Users\shree\google_submission\p1\docs\filter_behavior.md)
-6. [docs/testing_with_postman.md](c:\Users\shree\google_submission\p1\docs\testing_with_postman.md)
+6. [docs/live_comparison_checklist.md](c:\Users\shree\google_submission\p1\docs\live_comparison_checklist.md)
+7. [docs/testing_with_postman.md](c:\Users\shree\google_submission\p1\docs\testing_with_postman.md)
 
 ## Quick API Flow
 

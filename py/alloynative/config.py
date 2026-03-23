@@ -17,6 +17,14 @@ class IPType(str, Enum):
     PSC = "PSC"
 
 
+def coerce_ip_type(value: "IPType | str") -> IPType:
+    """Normalize either an IPType or a string into an IPType enum."""
+
+    if isinstance(value, IPType):
+        return value
+    return IPType(str(value).upper())
+
+
 @dataclass(frozen=True, slots=True)
 class AlloyDBConfig:
     """Immutable client configuration."""

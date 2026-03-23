@@ -55,6 +55,23 @@ class AlloyDBClientTest(IsolatedAsyncioTestCase):
         self.assertTrue(client.capabilities.has_scann)
         self.assertEqual(client.capabilities.preferred_index_type, "scann")
 
+    async def test_aconnect_accepts_string_ip_type(self) -> None:
+        connection_manager = AsyncMock()
+        validator = AsyncMock(return_value="validated")
+
+        client = await AlloyDBClient.aconnect(
+            project_id="project",
+            region="us-central1",
+            cluster="cluster",
+            instance="instance",
+            database="postgres",
+            ip_type="PUBLIC",
+            connection_manager=connection_manager,
+            validator=validator,
+        )
+
+        self.assertEqual(client.config.ip_type.value, "PUBLIC")
+
     async def test_execute_delegates_to_connection_manager(self) -> None:
         connection_manager = AsyncMock()
         connection_manager.execute.return_value = [{"value": 1}]

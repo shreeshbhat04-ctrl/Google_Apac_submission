@@ -138,3 +138,9 @@ Comparative evidence update:
 - Added `docs/pinecone_results_summary.md` to preserve the propagation vs divergence findings from Pinecone tests
 - Linked that document into the README and architecture story as evidence for AlloyNative's one-write, one-place design advantage
 -->
+
+<!--
+Live-validation update:
+- Added `docs/live_comparison_checklist.md` with a step-by-step AlloyDB vs Pinecone validation flow
+- Added a README section clarifying exactly what AlloyNative simplifies and where infrastructure work still remains
+-->

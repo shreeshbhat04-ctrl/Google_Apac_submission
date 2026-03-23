@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from .capabilities import CapabilitySnapshot, DEFAULT_CAPABILITIES
-from .config import AlloyDBConfig, IPType
+from .config import AlloyDBConfig, IPType, coerce_ip_type
 from .connection import AlloyDBConnectionManager
 from .results import SearchResponse, SearchResult, UpsertResult
 from .sql import (
@@ -57,7 +57,7 @@ class AlloyDBClient:
         instance: str,
         database: str,
         db_user: str | None = None,
-        ip_type: IPType = IPType.PRIVATE,
+        ip_type: IPType | str = IPType.PRIVATE,
         connection_manager: AlloyDBConnectionManager | None = None,
         validator=validate_environment,
         **config_overrides: Any,
@@ -71,7 +71,7 @@ class AlloyDBClient:
             instance=instance,
             database=database,
             db_user=db_user,
-            ip_type=ip_type,
+            ip_type=coerce_ip_type(ip_type),
             **config_overrides,
         )
         client = cls(
