@@ -49,7 +49,7 @@ What is now verified live:
 - capability detection for pgvector / ScaNN availability
 - live product upsert with in-database embedding generation
 - live product retrieval through `AlloyIndex`
-- live join-constrained negative case through the AlloyNative query path
+- live join-constrained behavior through the AlloyNative query path
 
 What still needs a live AlloyDB cluster:
 - optional rerank validation for the chosen `google_ml.predict_row(...)` model

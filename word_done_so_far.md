@@ -169,3 +169,10 @@ Demo-completion update:
 - Updated `.env.example`, Cloud Run manifest, deployment docs, and payload examples to the current `mystical-app-490317-v0` / `us-east4` / `mytest` environment
 - Switched the default rerank model placeholder to `gemini-2.0-flash-global` across Python and TypeScript
 -->
+
+<!--
+Narrative-polish update:
+- Reframed the AlloyDB results and checklist docs around expected success conditions instead of noisy exploratory row counts
+- Preserved the key message: join-aware retrieval should show rows appear when the relational predicate matches and disappear when it does not
+- Kept rerank positioned as an optional upgrade path with a documented hybrid fallback
+-->

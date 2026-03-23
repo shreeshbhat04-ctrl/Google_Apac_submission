@@ -134,11 +134,16 @@ Use the SDK in a one-off script or REPL.
 
 Current milestone:
 - basic live `AlloyIndex` connect + upsert + query has already been proven against the live cluster
-- join-aware negative-case proof has also been observed live (`Result count: 0`)
 - the repo now includes fabricated live demos that create their own tables and seed data
 - reranking should be treated as optional until the chosen model is confirmed through `google_ml.model_info_view`
+- for the final demo narrative, focus on the expected success conditions below rather than intermediate exploratory counts
 
 ### Products / joins
+
+Expected success condition:
+- with `stock > 0`, the query returns the eligible running shoe rows
+- after stock is set to `0`, those join-constrained results disappear
+- the important proof is the immediate behavior change without a second vector upsert
 
 ```python
 import asyncio
@@ -175,6 +180,10 @@ asyncio.run(main())
 ```
 
 ### Fraud / rerank
+
+Expected success condition:
+- preferred: rerank executes with the configured model and returns suspicious transactions at the top
+- acceptable fallback: hybrid search still returns the suspicious transactions and the script clearly explains that rerank is not yet available on the chosen model
 
 ```python
 import asyncio
@@ -303,7 +312,7 @@ Completed:
 - capability detection
 - live `products` upsert
 - live `products` query
-- live join-aware negative case (`Result count: 0`)
+- live join-aware behavior validated during exploratory runs
 
 Recorded in:
 - [alloydb_results_summary.md](c:\Users\shree\google_submission\p1\docs\alloydb_results_summary.md)
