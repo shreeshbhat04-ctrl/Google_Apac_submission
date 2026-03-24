@@ -7,8 +7,9 @@ import json
 import os
 from dataclasses import dataclass
 
-from alloynative import AlloyDBClient, IPType
+from alloynative import AlloyDBClient, IPType, coerce_ip_type
 from alloynative.capabilities import CapabilitySnapshot
+from alloynative.errors import AlloyNativeConfigurationError
 
 
 def load_env_file(path: str = ".env") -> None:
@@ -42,6 +43,8 @@ class ServerSettings:
     database: str
     db_user: str | None = None
     ip_type: IPType = IPType.PRIVATE
+    embedding_model: str = "text-embedding-005"
+    rerank_model: str = "gemini-2.0-flash-global"
     port: int = 8080
     host: str = "0.0.0.0"
     dev_mode: bool = False
@@ -51,14 +54,42 @@ class ServerSettings:
         """Load required runtime settings from environment variables."""
 
         dev_mode = os.environ.get("ALLOYNATIVE_DEV_MODE", "false").lower() == "true"
+        if dev_mode:
+            project_id = os.environ.get("ALLOYNATIVE_PROJECT_ID", "local-dev-project")
+            region = os.environ.get("ALLOYNATIVE_REGION", "us-central1")
+            cluster = os.environ.get("ALLOYNATIVE_CLUSTER", "local-dev-cluster")
+            instance = os.environ.get("ALLOYNATIVE_INSTANCE", "local-dev-instance")
+            database = os.environ.get("ALLOYNATIVE_DATABASE", "local-dev-db")
+        else:
+            required = {
+                "ALLOYNATIVE_PROJECT_ID": os.environ.get("ALLOYNATIVE_PROJECT_ID"),
+                "ALLOYNATIVE_REGION": os.environ.get("ALLOYNATIVE_REGION"),
+                "ALLOYNATIVE_CLUSTER": os.environ.get("ALLOYNATIVE_CLUSTER"),
+                "ALLOYNATIVE_INSTANCE": os.environ.get("ALLOYNATIVE_INSTANCE"),
+                "ALLOYNATIVE_DATABASE": os.environ.get("ALLOYNATIVE_DATABASE"),
+            }
+            missing = sorted(key for key, value in required.items() if not value)
+            if missing:
+                raise AlloyNativeConfigurationError(
+                    "Missing required production environment variables: "
+                    + ", ".join(missing)
+                )
+            project_id = str(required["ALLOYNATIVE_PROJECT_ID"])
+            region = str(required["ALLOYNATIVE_REGION"])
+            cluster = str(required["ALLOYNATIVE_CLUSTER"])
+            instance = str(required["ALLOYNATIVE_INSTANCE"])
+            database = str(required["ALLOYNATIVE_DATABASE"])
+
         return cls(
-            project_id=os.environ.get("ALLOYNATIVE_PROJECT_ID", "local-dev-project"),
-            region=os.environ.get("ALLOYNATIVE_REGION", "us-central1"),
-            cluster=os.environ.get("ALLOYNATIVE_CLUSTER", "local-dev-cluster"),
-            instance=os.environ.get("ALLOYNATIVE_INSTANCE", "local-dev-instance"),
-            database=os.environ.get("ALLOYNATIVE_DATABASE", "local-dev-db"),
+            project_id=project_id,
+            region=region,
+            cluster=cluster,
+            instance=instance,
+            database=database,
             db_user=os.environ.get("ALLOYNATIVE_DB_USER") or None,
-            ip_type=IPType(os.environ.get("ALLOYNATIVE_IP_TYPE", IPType.PRIVATE.value)),
+            ip_type=coerce_ip_type(os.environ.get("ALLOYNATIVE_IP_TYPE", IPType.PRIVATE.value)),
+            embedding_model=os.environ.get("ALLOYNATIVE_EMBEDDING_MODEL", "text-embedding-005"),
+            rerank_model=os.environ.get("ALLOYNATIVE_RERANK_MODEL", "gemini-2.0-flash-global"),
             port=int(os.environ.get("PORT", "8080")),
             host=os.environ.get("ALLOYNATIVE_HOST", "0.0.0.0"),
             dev_mode=dev_mode,
@@ -266,4 +297,6 @@ async def build_client(settings: ServerSettings) -> AlloyDBClient:
         database=settings.database,
         db_user=settings.db_user,
         ip_type=settings.ip_type,
+        default_embedding_model=settings.embedding_model,
+        default_rerank_model=settings.rerank_model,
     )

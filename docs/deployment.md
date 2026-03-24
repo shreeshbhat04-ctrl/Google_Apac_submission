@@ -31,17 +31,27 @@ Before deploying, verify:
 - that the Cloud Run service account exists and has `roles/alloydb.client`
 - that the same principal exists as an AlloyDB IAM database user
 - that `vector` and `google_ml_integration` are installed in `my_application_db`
+- that Cloud Run reaches AlloyDB over the configured VPC path with `ALLOYNATIVE_IP_TYPE=PRIVATE`
+- that all required `ALLOYNATIVE_*` env vars are present because the server now fails fast when production settings are missing
 
-Suggested deployment flow:
+Suggested deployment flow from the `p1` directory:
 
 ```bash
 gcloud config set project mystical-app-490317-v0
-gcloud builds submit p1/server \
-  --tag us-east4-docker.pkg.dev/mystical-app-490317-v0/alloynative/alloynative:latest
 
-gcloud run services replace p1/server/service.yaml \
+# Make sure to run this INSIDE the `p1` folder because the Dockerfile copies `py/` and `server/`
+gcloud builds submit . \
+  --tag us-east4-docker.pkg.dev/mystical-app-490317-v0/alloynative/alloynative:latest \
+  -f server/Dockerfile
+
+gcloud run services replace server/service.yaml \
   --region us-east4
 ```
+
+Production runtime notes:
+- the container now starts with `python -m server.main`, so it respects the Cloud Run `PORT` env var
+- the server no longer falls back to `local-dev-*` defaults outside `ALLOYNATIVE_DEV_MODE=true`
+- `.dockerignore` excludes datasets, local env files, docs, and other non-runtime assets from the build context
 
 ## Rerank Note
 

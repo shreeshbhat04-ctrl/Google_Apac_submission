@@ -63,9 +63,45 @@ def create_rest_app(client=None, action_registry=None):
     def resolve_action_registry():
         return action_registry if action_registry is not None else app.state.action_registry
 
+    try:
+        from fastapi.staticfiles import StaticFiles
+        import os
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        if os.path.exists(static_dir):
+            app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    except ImportError:
+        pass
+
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/")
+    async def root():
+        try:
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url="/static/index.html")
+        except ImportError:
+            return {"message": "AlloyNative API is running."}
+
+    @app.get("/api/dashboard")
+    async def dashboard() -> dict[str, Any]:
+        try:
+            from server.dashboard_runtime import get_dashboard_payload
+
+            settings = getattr(app.state, "settings", None)
+            return await get_dashboard_payload(resolve_client(), settings)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/api/run-test")
+    async def run_test(scenario: str) -> dict[str, Any]:
+        try:
+            from server.dashboard_runtime import run_scenario_test
+
+            return await run_scenario_test(resolve_client(), scenario)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.post("/v1/upsert")
     async def upsert(payload: dict[str, Any]) -> dict[str, Any]:

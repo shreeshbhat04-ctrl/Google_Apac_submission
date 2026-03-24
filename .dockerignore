@@ -1,0 +1,15 @@
+.git
+.gitignore
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+datasets/
+ts/node_modules/
+demo/
+docs/
+README.md
+LEARNINGS.md
+word_done_so_far.md
+.env

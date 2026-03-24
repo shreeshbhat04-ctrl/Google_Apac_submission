@@ -5,6 +5,7 @@ from unittest import IsolatedAsyncioTestCase, TestCase
 from unittest.mock import AsyncMock
 
 from server.dependencies import MockAlloyDBClient, ServerSettings, build_client
+from alloynative.errors import AlloyNativeConfigurationError
 
 
 class ServerSettingsTest(TestCase):
@@ -22,6 +23,25 @@ class ServerSettingsTest(TestCase):
 
         self.assertTrue(settings.dev_mode)
         self.assertEqual(settings.project_id, "local-dev-project")
+
+    def test_from_env_requires_production_values_when_not_in_dev_mode(self) -> None:
+        original = dict(os.environ)
+        try:
+            os.environ["ALLOYNATIVE_DEV_MODE"] = "false"
+            for key in (
+                "ALLOYNATIVE_PROJECT_ID",
+                "ALLOYNATIVE_REGION",
+                "ALLOYNATIVE_CLUSTER",
+                "ALLOYNATIVE_INSTANCE",
+                "ALLOYNATIVE_DATABASE",
+            ):
+                os.environ.pop(key, None)
+
+            with self.assertRaises(AlloyNativeConfigurationError):
+                ServerSettings.from_env()
+        finally:
+            os.environ.clear()
+            os.environ.update(original)
 
 
 class MockAlloyDBClientTest(IsolatedAsyncioTestCase):
@@ -69,6 +89,40 @@ class MockAlloyDBClientTest(IsolatedAsyncioTestCase):
         client = await build_client(settings)
 
         self.assertIsInstance(client, MockAlloyDBClient)
+
+    async def test_build_client_passes_runtime_models_to_real_client(self) -> None:
+        settings = ServerSettings(
+            project_id="project",
+            region="us-east4",
+            cluster="cluster",
+            instance="instance",
+            database="db",
+            db_user="svc@example.com",
+            ip_type="PRIVATE",  # type: ignore[arg-type]
+            embedding_model="text-embedding-005",
+            rerank_model="gemini-2.0-flash-global",
+            dev_mode=False,
+        )
+
+        from server import dependencies as dependencies_module
+
+        original = dependencies_module.AlloyDBClient.aconnect
+        dependencies_module.AlloyDBClient.aconnect = AsyncMock(return_value=AsyncMock())
+        try:
+            await build_client(settings)
+            dependencies_module.AlloyDBClient.aconnect.assert_awaited_once_with(
+                project_id="project",
+                region="us-east4",
+                cluster="cluster",
+                instance="instance",
+                database="db",
+                db_user="svc@example.com",
+                ip_type=settings.ip_type,
+                default_embedding_model="text-embedding-005",
+                default_rerank_model="gemini-2.0-flash-global",
+            )
+        finally:
+            dependencies_module.AlloyDBClient.aconnect = original
 
     async def test_search_hybrid_supports_join_filters_in_mock_mode(self) -> None:
         client = MockAlloyDBClient()

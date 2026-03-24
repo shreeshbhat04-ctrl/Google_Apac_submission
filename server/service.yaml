@@ -32,7 +32,11 @@ spec:
               value: "my_application_db"
             - name: ALLOYNATIVE_DB_USER
               value: "alloynative-run@mystical-app-490317-v0.iam.gserviceaccount.com"
+            - name: ALLOYNATIVE_EMBEDDING_MODEL
+              value: "text-embedding-005"
             - name: ALLOYNATIVE_IP_TYPE
               value: "PRIVATE"
             - name: ALLOYNATIVE_RERANK_MODEL
               value: "gemini-2.0-flash-global"
+            - name: ALLOYNATIVE_DEV_MODE
+              value: "false"

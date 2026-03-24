@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlloyNative Demo Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0906;
+  --panel:#12100b;
+  --panel2:#17140d;
+  --border:#2d2718;
+  --border-strong:#705a13;
+  --amber:#ffba24;
+  --amber-soft:#ffd975;
+  --green:#6ef7a8;
+  --red:#ff7062;
+  --blue:#6fcaff;
+  --text:#f3e8c6;
+  --muted:#a18f5d;
+  --muted-2:#6f623b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:
+    radial-gradient(circle at top right, rgba(255,186,36,.08), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(255,186,36,.05), transparent 35%),
+    var(--bg);
+  color:var(--text);
+  font-family:"JetBrains Mono",monospace;
+}
+.app{
+  min-height:100vh;
+  display:grid;
+  grid-template-rows:52px 1fr;
+}
+.topbar{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 18px;
+  border-bottom:1px solid var(--border);
+  background:rgba(10,9,6,.96);
+}
+.brand{
+  color:var(--amber);
+  font-size:24px;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+.tag{
+  padding:7px 10px;
+  border:1px solid var(--border-strong);
+  background:var(--panel2);
+  color:var(--amber-soft);
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.spacer{margin-left:auto}
+.meta{
+  color:var(--muted);
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.shell{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  min-height:0;
+}
+.sidebar{
+  border-right:1px solid var(--border);
+  background:rgba(13,12,8,.96);
+  display:flex;
+  flex-direction:column;
+}
+.section-title{
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.scenario-list,.capability-list{
+  padding:10px;
+  display:grid;
+  gap:10px;
+}
+.scenario-card,.capability-card,.info-card,.result-card,.terminal-card,.benchmark-card{
+  border:1px solid var(--border);
+  background:var(--panel);
+}
+.scenario-card{
+  padding:12px;
+  cursor:pointer;
+  transition:border-color .15s ease, transform .15s ease;
+}
+.scenario-card:hover,.scenario-card.active{
+  border-color:var(--amber);
+  transform:translateX(2px);
+}
+.scenario-domain{
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.scenario-title{
+  margin-top:6px;
+  font-size:14px;
+  font-weight:700;
+  line-height:1.45;
+}
+.scenario-subtitle{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.6;
+}
+.capability-card{
+  padding:10px 12px;
+}
+.capability-card strong{
+  display:block;
+  color:var(--amber-soft);
+  font-size:11px;
+  margin-bottom:4px;
+}
+.capability-card span{
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.6;
+}
+.main{
+  min-width:0;
+  display:grid;
+  grid-template-rows:auto auto 1fr auto;
+}
+.hero{
+  padding:22px 24px 18px;
+  border-bottom:1px solid var(--border);
+}
+.hero-kicker{
+  color:var(--muted);
+  font-size:11px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+}
+.hero h1{
+  margin:8px 0 0;
+  color:var(--amber-soft);
+  font-size:40px;
+  line-height:1.05;
+}
+.hero-summary{
+  margin-top:14px;
+  max-width:78ch;
+  font-size:18px;
+  line-height:1.7;
+}
+.page-nav{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 24px;
+  border-bottom:1px solid var(--border);
+  background:rgba(15,13,9,.96);
+}
+.page-nav-label{
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.page-button{
+  padding:9px 12px;
+  border:1px solid var(--border);
+  background:var(--panel2);
+  color:var(--muted);
+  font:inherit;
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.page-button.active{
+  border-color:var(--amber);
+  color:var(--amber-soft);
+}
+.page-status{
+  margin-left:auto;
+  color:var(--muted);
+  font-size:11px;
+}
+.content{
+  overflow:auto;
+  padding:24px;
+}
+.page{
+  display:none;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+.page.active{display:grid}
+.stack{
+  display:grid;
+  gap:18px;
+  min-width:0;
+}
+.card-head{
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.card-head strong{color:var(--amber)}
+.card-body{padding:14px}
+.info-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.info-card{
+  padding:12px;
+}
+.info-card strong{
+  display:block;
+  color:var(--amber-soft);
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+.info-card p{
+  margin:0;
+  font-size:14px;
+  line-height:1.8;
+}
+.result-list,.terminal-lines{
+  display:grid;
+  gap:10px;
+}
+.result-card{
+  padding:11px 12px;
+}
+.result-card strong{
+  display:block;
+  color:var(--amber-soft);
+  margin-bottom:6px;
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.result-card p{
+  margin:0;
+  font-size:13px;
+  line-height:1.7;
+}
+.terminal-card{
+  padding:11px 12px;
+  background:#090805;
+}
+.terminal-card.info{color:var(--blue)}
+.terminal-card.ok{color:var(--green)}
+.terminal-card.warn{color:var(--red)}
+.terminal-card.dim{color:var(--muted)}
+.terminal-card span{
+  font-size:13px;
+  line-height:1.7;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:12px 10px;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-size:13px;
+  line-height:1.5;
+}
+th{
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  font-weight:500;
+}
+.winner-alloy{color:var(--green)}
+.winner-pine{color:var(--red)}
+.footer{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:14px 24px;
+  border-top:1px solid var(--border);
+  background:rgba(10,9,6,.96);
+}
+.footer-meta{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.footer-meta div{
+  color:var(--muted);
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.footer-meta strong{
+  color:var(--amber-soft);
+}
+.footer-actions{
+  margin-left:auto;
+  display:flex;
+  gap:10px;
+}
+button.action{
+  padding:10px 14px;
+  border:1px solid var(--amber);
+  background:var(--amber);
+  color:#1d1400;
+  font:inherit;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+button.action.secondary{
+  background:transparent;
+  color:var(--amber);
+}
+button.action:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+.error{
+  display:none;
+  margin:0 24px 16px;
+  padding:12px 14px;
+  border:1px solid var(--red);
+  background:rgba(255,112,98,.08);
+  color:var(--red);
+  font-size:13px;
+  line-height:1.6;
+}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#0a0906}
+::-webkit-scrollbar-thumb{background:var(--border-strong)}
+@media (max-width:1200px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{border-right:0;border-bottom:1px solid var(--border)}
+  .page.active{grid-template-columns:1fr}
+  .hero h1{font-size:30px}
+  .hero-summary{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">ALLOYNATIVE</div>
+    <div class="tag">Live Demo Guide</div>
+    <div class="meta" id="regionMeta">Region --</div>
+    <div class="meta" id="clusterMeta">Cluster --</div>
+    <div class="spacer"></div>
+    <div class="meta" id="modeMeta">Mode --</div>
+  </div>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="section-title">Scenarios</div>
+      <div class="scenario-list" id="scenarioList"></div>
+
+      <div class="section-title">Platform Capabilities</div>
+      <div class="capability-list" id="capabilityList"></div>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <div class="hero-kicker" id="heroDomain">Scenario</div>
+        <h1 id="heroTitle">Loading</h1>
+        <div class="hero-summary" id="heroSummary">Connecting to the backend.</div>
+      </section>
+
+      <section class="page-nav">
+        <div class="page-nav-label">Reading Guide</div>
+        <button class="page-button active" data-page="context">Context</button>
+        <button class="page-button" data-page="capabilities">Capabilities</button>
+        <button class="page-button" data-page="evidence">Evidence</button>
+        <div class="page-status" id="pageStatus">Page 1 / 3</div>
+      </section>
+
+      <div class="content">
+        <div class="error" id="errorBanner"></div>
+
+        <section class="page active" data-page="context">
+          <div class="stack">
+            <div class="benchmark-card">
+              <div class="card-head"><strong>Problem</strong></div>
+              <div class="card-body">
+                <div class="info-grid">
+                  <div class="info-card">
+                    <strong>Scenario</strong>
+                    <p id="scenarioGoal"></p>
+                  </div>
+                  <div class="info-card">
+                    <strong>Expected Success</strong>
+                    <p id="expectedSuccess"></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="benchmark-card">
+              <div class="card-head"><strong>Why It Matters</strong></div>
+              <div class="card-body">
+                <div class="result-list" id="stakesList"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="capabilities">
+          <div class="stack">
+            <div class="benchmark-card">
+              <div class="card-head"><strong>What AlloyNative Does</strong></div>
+              <div class="card-body">
+                <div class="result-list" id="platformResults"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="benchmark-card">
+              <div class="card-head"><strong>Comparison Summary</strong></div>
+              <div class="card-body">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>AlloyNative</th>
+                      <th>Pinecone</th>
+                      <th>Winner</th>
+                    </tr>
+                  </thead>
+                  <tbody id="benchBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="evidence">
+          <div class="stack">
+            <div class="benchmark-card">
+              <div class="card-head"><strong>Observed Results</strong></div>
+              <div class="card-body">
+                <div class="result-list" id="resultList"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="benchmark-card">
+              <div class="card-head"><strong>Live Run Output</strong></div>
+              <div class="card-body">
+                <div class="terminal-lines" id="terminal"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="footer">
+        <div class="footer-meta">
+          <div>Project <strong id="projectMeta">--</strong></div>
+          <div>Database <strong id="databaseMeta">--</strong></div>
+          <div>Index <strong id="indexMeta">--</strong></div>
+          <div>Last Run <strong id="lastRunMeta">none</strong></div>
+        </div>
+        <div class="footer-actions">
+          <button class="action secondary" id="prevPageBtn">Previous</button>
+          <button class="action secondary" id="nextPageBtn">Next</button>
+          <button class="action secondary" id="refreshBtn">Refresh</button>
+          <button class="action" id="runBtn">Run Live Test</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+const state={dashboard:null,currentScenario:null,currentPage:"context"};
+const pages=["context","capabilities","evidence"];
+
+function setError(message=""){
+  const el=document.getElementById("errorBanner");
+  el.style.display=message?"block":"none";
+  el.textContent=message;
+}
+
+function renderDashboard(data){
+  state.dashboard=data;
+  if(!state.currentScenario){
+    state.currentScenario=data.scenarios[0].id;
+  }
+
+  document.getElementById("regionMeta").textContent=`Region ${data.header.region}`;
+  document.getElementById("clusterMeta").textContent=`Cluster ${data.header.cluster}`;
+  document.getElementById("modeMeta").textContent=`Mode ${data.header.connection_mode}`;
+  document.getElementById("projectMeta").textContent=data.header.project_id;
+  document.getElementById("databaseMeta").textContent=data.header.database;
+  document.getElementById("indexMeta").textContent=data.capabilities.preferred_index_type || "ivfflat";
+
+  document.getElementById("scenarioList").innerHTML=data.scenarios.map((scenario)=>`
+    <div class="scenario-card ${scenario.id===state.currentScenario?"active":""}" data-scenario="${scenario.id}">
+      <div class="scenario-domain">${scenario.domain}</div>
+      <div class="scenario-title">${scenario.title}</div>
+      <div class="scenario-subtitle">${scenario.subtitle}</div>
+    </div>
+  `).join("");
+
+  document.querySelectorAll(".scenario-card").forEach((card)=>{
+    card.addEventListener("click",()=>{
+      state.currentScenario=card.dataset.scenario;
+      renderScenario();
+    });
+  });
+
+  document.getElementById("capabilityList").innerHTML=[
+    {
+      title:"Live SQL + Vector",
+      body:"Embeddings, filters, and joins execute in the same AlloyDB boundary."
+    },
+    {
+      title:"Pinecone-Compatible API",
+      body:"The same upsert/query shape can be used without introducing a second storage system."
+    },
+    {
+      title:"Join-Aware Retrieval",
+      body:"Inventory, ward state, or fraud status can directly control eligibility."
+    },
+    {
+      title:"Hybrid Search Baseline",
+      body:"The demo remains usable even if optional rerank is unavailable."
+    }
+  ].map((item)=>`
+    <div class="capability-card">
+      <strong>${item.title}</strong>
+      <span>${item.body}</span>
+    </div>
+  `).join("");
+
+  document.getElementById("benchBody").innerHTML=data.benchmarks.map((row)=>`
+    <tr>
+      <td>${row.metric}</td>
+      <td>${row.alloynative}</td>
+      <td>${row.pinecone}</td>
+      <td class="${row.winner==="AlloyNative"?"winner-alloy":"winner-pine"}">${row.winner}</td>
+    </tr>
+  `).join("");
+
+  renderScenario();
+}
+
+function renderScenario(){
+  const scenario=state.dashboard.scenarios.find((item)=>item.id===state.currentScenario);
+  if(!scenario)return;
+
+  document.querySelectorAll(".scenario-card").forEach((card)=>{
+    card.classList.toggle("active",card.dataset.scenario===scenario.id);
+  });
+
+  document.getElementById("heroDomain").textContent=scenario.domain.toUpperCase();
+  document.getElementById("heroTitle").textContent=scenario.title;
+  document.getElementById("heroSummary").textContent=scenario.subtitle;
+  document.getElementById("scenarioGoal").textContent=scenario.problem;
+  document.getElementById("expectedSuccess").textContent=scenario.expected.join(" ");
+  document.getElementById("stakesList").innerHTML=scenario.stakes.map((item)=>`
+    <div class="result-card">
+      <strong>Why It Matters</strong>
+      <p>${item}</p>
+    </div>
+  `).join("");
+
+  document.getElementById("platformResults").innerHTML=[
+    "Connects to live AlloyDB and validates pgvector capability at runtime.",
+    "Runs in-database embeddings and hybrid retrieval without moving data into a separate vector service.",
+    "Uses live relational state to change result eligibility immediately.",
+    "Keeps the demo usable even when optional LLM rerank is not available."
+  ].map((item)=>`
+    <div class="result-card">
+      <strong>Capability</strong>
+      <p>${item}</p>
+    </div>
+  `).join("");
+
+  document.getElementById("resultList").innerHTML=`
+    <div class="result-card">
+      <strong>Expected Demo Outcome</strong>
+      <p>${scenario.expected.join(" ")}</p>
+    </div>
+    <div class="result-card">
+      <strong>Current State</strong>
+      <p>Run the live test to load the stored scenario evidence from the backend.</p>
+    </div>
+  `;
+
+  document.getElementById("terminal").innerHTML=`
+    <div class="terminal-card dim"><span>Ready to run ${scenario.domain.toLowerCase()} evidence collection.</span></div>
+    <div class="terminal-card dim"><span>The page will stay focused on results instead of code.</span></div>
+  `;
+
+  setPage(state.currentPage);
+}
+
+function setPage(page){
+  state.currentPage=page;
+  document.querySelectorAll(".page-button").forEach((button)=>{
+    button.classList.toggle("active",button.dataset.page===page);
+  });
+  document.querySelectorAll(".page").forEach((section)=>{
+    section.classList.toggle("active",section.dataset.page===page);
+  });
+  document.getElementById("pageStatus").textContent=`Page ${pages.indexOf(page)+1} / ${pages.length}`;
+  document.getElementById("prevPageBtn").disabled=pages.indexOf(page)===0;
+  document.getElementById("nextPageBtn").disabled=pages.indexOf(page)===pages.length-1;
+}
+
+function goPage(step){
+  const currentIndex=pages.indexOf(state.currentPage);
+  const nextIndex=Math.max(0,Math.min(pages.length-1,currentIndex+step));
+  setPage(pages[nextIndex]);
+}
+
+function renderResultGroup(label,items){
+  if(!items||!items.length){
+    return `
+      <div class="result-card">
+        <strong>${label}</strong>
+        <p>No matching rows returned.</p>
+      </div>
+    `;
+  }
+  return items.map((item)=>`
+    <div class="result-card">
+      <strong>${label} · ${item.id}</strong>
+      <p>${item.content}<br>score=${Number(item.score).toFixed(4)} distance=${item.distance===null?"n/a":Number(item.distance).toFixed(4)}</p>
+    </div>
+  `).join("");
+}
+
+async function loadDashboard(){
+  try{
+    setError("");
+    const response=await fetch("/api/dashboard");
+    if(!response.ok)throw new Error(`Dashboard load failed: ${response.status}`);
+    const data=await response.json();
+    renderDashboard(data);
+  }catch(error){
+    setError(error.message);
+  }
+}
+
+async function runScenario(){
+  const btn=document.getElementById("runBtn");
+  btn.disabled=true;
+  btn.textContent="Running...";
+  setPage("evidence");
+  try{
+    setError("");
+    const response=await fetch(`/api/run-test?scenario=${encodeURIComponent(state.currentScenario)}`);
+    if(!response.ok){
+      const payload=await response.json().catch(()=>({}));
+      throw new Error(payload.detail||`Scenario run failed: ${response.status}`);
+    }
+    const payload=await response.json();
+    document.getElementById("lastRunMeta").textContent=`${payload.scenario_id} · ${payload.metrics.elapsed_ms}ms`;
+    document.getElementById("terminal").innerHTML=payload.terminal_lines.map((line)=>`
+      <div class="terminal-card ${line.tone}"><span>${line.text}</span></div>
+    `).join("");
+    const groups=[
+      `
+      <div class="result-card">
+        <strong>Headline</strong>
+        <p>${payload.headline}</p>
+      </div>
+      `,
+      `
+      <div class="result-card">
+        <strong>Elapsed</strong>
+        <p>${payload.metrics.elapsed_ms} ms</p>
+      </div>
+      `
+    ];
+    for(const [label,items] of Object.entries(payload.results)){
+      groups.push(renderResultGroup(label.toUpperCase(),items));
+    }
+    document.getElementById("resultList").innerHTML=groups.join("");
+  }catch(error){
+    setError(error.message);
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Run Live Test";
+  }
+}
+
+document.querySelectorAll(".page-button").forEach((button)=>{
+  button.addEventListener("click",()=>setPage(button.dataset.page));
+});
+document.getElementById("prevPageBtn").addEventListener("click",()=>goPage(-1));
+document.getElementById("nextPageBtn").addEventListener("click",()=>goPage(1));
+document.getElementById("refreshBtn").addEventListener("click",loadDashboard);
+document.getElementById("runBtn").addEventListener("click",runScenario);
+
+loadDashboard();
+</script>
+</body>
+</html>
