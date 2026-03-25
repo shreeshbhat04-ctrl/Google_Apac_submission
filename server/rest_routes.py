@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping, Sequence
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def upsert_request_to_client_kwargs(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -57,8 +60,19 @@ def create_rest_app(client=None, action_registry=None):
 
     app = FastAPI(title="AlloyNative", version="0.1.0")
 
-    def resolve_client():
-        return client if client is not None else app.state.client
+    async def resolve_client():
+        if client is not None:
+            return client
+        existing = getattr(app.state, "client", None)
+        if existing is not None:
+            return existing
+
+        from server.dependencies import build_client
+
+        settings = getattr(app.state, "settings", None)
+        built_client = await build_client(settings)
+        app.state.client = built_client
+        return built_client
 
     def resolve_action_registry():
         return action_registry if action_registry is not None else app.state.action_registry
@@ -90,8 +104,9 @@ def create_rest_app(client=None, action_registry=None):
             from server.dashboard_runtime import get_dashboard_payload
 
             settings = getattr(app.state, "settings", None)
-            return await get_dashboard_payload(resolve_client(), settings)
+            return await get_dashboard_payload(None, settings)
         except Exception as exc:
+            logger.exception("Dashboard request failed.")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.get("/api/run-test")
@@ -99,23 +114,29 @@ def create_rest_app(client=None, action_registry=None):
         try:
             from server.dashboard_runtime import run_scenario_test
 
-            return await run_scenario_test(resolve_client(), scenario)
+            client_instance = await resolve_client()
+            return await run_scenario_test(client_instance, scenario)
         except Exception as exc:
+            logger.exception("Scenario run failed for %s.", scenario)
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.post("/v1/upsert")
     async def upsert(payload: dict[str, Any]) -> dict[str, Any]:
         try:
-            result = await resolve_client().upsert_rows(**upsert_request_to_client_kwargs(payload))
+            client_instance = await resolve_client()
+            result = await client_instance.upsert_rows(**upsert_request_to_client_kwargs(payload))
         except Exception as exc:
+            logger.exception("Upsert request failed.")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"count": result.count, "ids": result.ids}
 
     @app.post("/v1/search")
     async def search(payload: dict[str, Any]) -> dict[str, Any]:
         try:
-            response = await resolve_client().search_hybrid(**search_request_to_client_kwargs(payload))
+            client_instance = await resolve_client()
+            response = await client_instance.search_hybrid(**search_request_to_client_kwargs(payload))
         except Exception as exc:
+            logger.exception("Search request failed.")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {
             "results": [
@@ -142,6 +163,7 @@ def create_rest_app(client=None, action_registry=None):
                 description=str(payload.get("description", "")),
             )
         except Exception as exc:
+            logger.exception("Register action request failed.")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {
             "action_id": action.action_id,
@@ -151,12 +173,14 @@ def create_rest_app(client=None, action_registry=None):
     @app.post("/v1/actions/execute")
     async def execute_action(payload: dict[str, Any]) -> dict[str, Any]:
         try:
+            client_instance = await resolve_client()
             rows = await resolve_action_registry().execute(
-                resolve_client(),
+                client_instance,
                 action_id=str(payload["action_id"]),
                 params=dict(payload.get("params", {})),
             )
         except Exception as exc:
+            logger.exception("Execute action request failed.")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"rows": rows}
 

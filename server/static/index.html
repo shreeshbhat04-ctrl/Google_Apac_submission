@@ -608,15 +608,23 @@ function renderScenario(){
       <strong>Expected Demo Outcome</strong>
       <p>${scenario.expected.join(" ")}</p>
     </div>
-    <div class="result-card">
-      <strong>Current State</strong>
-      <p>Run the live test to load the stored scenario evidence from the backend.</p>
-    </div>
+    ${scenario.success_signals.map((item)=>`
+      <div class="result-card">
+        <strong>Success Signal</strong>
+        <p>${item}</p>
+      </div>
+    `).join("")}
+    ${scenario.observed.map((item)=>`
+      <div class="result-card">
+        <strong>Stored Evidence</strong>
+        <p>${item}</p>
+      </div>
+    `).join("")}
   `;
 
   document.getElementById("terminal").innerHTML=`
-    <div class="terminal-card dim"><span>Ready to run ${scenario.domain.toLowerCase()} evidence collection.</span></div>
-    <div class="terminal-card dim"><span>The page will stay focused on results instead of code.</span></div>
+    <div class="terminal-card dim"><span>Stored evidence is loaded by default so the guide is readable even before a live run.</span></div>
+    <div class="terminal-card dim"><span>Use Run Live Test only when you want a fresh cluster-backed execution for ${scenario.domain.toLowerCase()}.</span></div>
   `;
 
   setPage(state.currentPage);

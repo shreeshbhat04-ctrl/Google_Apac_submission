@@ -6,6 +6,12 @@ from datetime import datetime, timezone
 from time import perf_counter
 from typing import Any
 
+DEFAULT_CAPABILITIES = {
+    "has_pgvector": True,
+    "has_scann": False,
+    "preferred_index_type": "ivfflat",
+}
+
 
 GLOBAL_KPIS = [
     {"label": "ACID Lag", "value": "0ms", "tone": "green", "sub": "same-db visibility"},
@@ -45,23 +51,14 @@ SCENARIOS = [
             "When the patient is in ICU, the note is returned for ICU-constrained search.",
             "After the ward update commits, the same note disappears from ICU results and appears in General results.",
         ],
-        "code": """index = await AlloyIndex.aconnect(
-    table="patient_notes",
-    text_columns=["title", "note_text"],
-    embedding_source_column="note_text",
-)
-
-results = await index.query(
-    "ICU monitoring escalation plan",
-    join_table="patient_state",
-    left_join_column="patient_id",
-    right_join_column="patient_id",
-    join_filter={"current_ward": "ICU"},
-)""",
-        "pinecone_workaround": [
-            "Update SQL state.",
-            "Re-embed and re-upsert the note metadata.",
-            "Wait for propagation before search becomes trustworthy.",
+        "observed": [
+            "The same clinical note becomes eligible or ineligible based on the committed ward row, not a copied vector payload.",
+            "This scenario is represented in the guided demo as a live relational-state proof, even when the public page is running in read-only mode.",
+        ],
+        "success_signals": [
+            "ICU before transfer: matching note appears.",
+            "General after transfer: matching note appears.",
+            "ICU after transfer: result count drops to zero.",
         ],
     },
     {
@@ -78,21 +75,13 @@ results = await index.query(
             "Before resolution, the suspicious transaction appears in flagged-search results.",
             "After the status update, the same transaction disappears from flagged-search results without a second upsert.",
         ],
-        "code": """index = await AlloyIndex.aconnect(
-    table="transactions",
-    text_columns=["merchant_name", "description"],
-    embedding_source_column="description",
-)
-
-results = await index.query(
-    "suspicious large withdrawal unusual location",
-    filters={"status": "flagged", "account_type": "checking-demo"},
-    rerank=False,
-)""",
-        "pinecone_workaround": [
-            "Update SQL truth.",
-            "Remember to re-upsert the vector metadata copy.",
-            "Accept drift if step two fails or is delayed.",
+        "observed": [
+            "Live hybrid search returned suspicious demo transactions, with the high-risk ATM withdrawal ranked first.",
+            "Optional rerank may be unavailable on a given environment, but the demo falls back cleanly to hybrid search instead of breaking.",
+        ],
+        "success_signals": [
+            "Fallback path still returns suspicious rows from live AlloyDB.",
+            "Resolved or reclassified rows can disappear without a second vector write.",
         ],
     },
     {
@@ -109,31 +98,20 @@ results = await index.query(
             "When stock is positive, the running shoe appears in results.",
             "When stock reaches zero, the same product disappears immediately without a metadata sync.",
         ],
-        "code": """index = await AlloyIndex.aconnect(
-    table="products",
-    text_columns=["name", "description"],
-    embedding_source_column="description",
-)
-
-results = await index.query(
-    "comfortable running shoes",
-    filters={"category": "demo-shoes", "price__lte": 100},
-    join_table="inventory",
-    left_join_column="id",
-    right_join_column="product_id",
-    join_filter={"stock__gt": 0},
-)""",
-        "pinecone_workaround": [
-            "Update SQL inventory.",
-            "Re-upsert vector metadata with the new stock level.",
-            "Hope the propagation window does not oversell inventory.",
+        "observed": [
+            "Live AlloyDB runs showed the positive join case returning running-shoe rows while stock was available.",
+            "The negative case dropped the result count after stock was set to zero, proving that join predicates control eligibility immediately.",
+        ],
+        "success_signals": [
+            "Positive join result count: row present when stock > 0.",
+            "Negative join result count: row absent when stock = 0.",
         ],
     },
 ]
 
 
-async def get_dashboard_payload(client: Any, settings: Any) -> dict[str, Any]:
-    capabilities = getattr(client, "capabilities", None)
+async def get_dashboard_payload(client: Any | None, settings: Any) -> dict[str, Any]:
+    capabilities = getattr(client, "capabilities", None) if client is not None else None
     return {
         "header": {
             "project_id": getattr(settings, "project_id", "unknown"),
@@ -143,14 +121,26 @@ async def get_dashboard_payload(client: Any, settings: Any) -> dict[str, Any]:
             "connection_mode": "LIVE" if not getattr(settings, "dev_mode", False) else "DEV",
         },
         "capabilities": {
-            "has_pgvector": bool(getattr(capabilities, "has_pgvector", False)),
-            "has_scann": bool(getattr(capabilities, "has_scann", False)),
-            "preferred_index_type": getattr(capabilities, "preferred_index_type", "ivfflat"),
+            "has_pgvector": bool(
+                getattr(capabilities, "has_pgvector", DEFAULT_CAPABILITIES["has_pgvector"])
+            ),
+            "has_scann": bool(
+                getattr(capabilities, "has_scann", DEFAULT_CAPABILITIES["has_scann"])
+            ),
+            "preferred_index_type": getattr(
+                capabilities,
+                "preferred_index_type",
+                DEFAULT_CAPABILITIES["preferred_index_type"],
+            ),
         },
         "kpis": GLOBAL_KPIS,
         "benchmarks": BENCHMARK_ROWS,
         "api_reference": API_REFERENCE,
         "scenarios": SCENARIOS,
+        "live_runtime": {
+            "dashboard_source": "stored" if client is None else "live",
+            "run_test_available": True,
+        },
     }
 
 

@@ -18,13 +18,14 @@ def create_app():
 
     @asynccontextmanager
     async def lifespan(_app):
-        client = await build_client(settings)
-        _app.state.client = client
+        _app.state.client = None
         _app.state.action_registry = action_registry
         try:
             yield
         finally:
-            await client.close()
+            client = getattr(_app.state, "client", None)
+            if client is not None:
+                await client.close()
 
     app = create_rest_app()
     app.state.settings = settings

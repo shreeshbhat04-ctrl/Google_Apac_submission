@@ -10,7 +10,7 @@ spec:
         autoscaling.knative.dev/minScale: "1"
         run.googleapis.com/network-interfaces: >
           [{"network":"default","subnetwork":"default"}]
-        run.googleapis.com/vpc-access-egress: all-traffic
+        run.googleapis.com/vpc-access-egress: private-ranges-only
     spec:
       serviceAccountName: alloynative-run@mystical-app-490317-v0.iam.gserviceaccount.com
       containers:
@@ -18,8 +18,6 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: PORT
-              value: "8080"
             - name: ALLOYNATIVE_PROJECT_ID
               value: "mystical-app-490317-v0"
             - name: ALLOYNATIVE_REGION
