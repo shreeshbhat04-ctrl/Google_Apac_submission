@@ -90,6 +90,19 @@ def create_rest_app(client=None, action_registry=None):
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    @app.get("/v1/status")
+    async def get_status() -> dict[str, Any]:
+        settings = app.state.settings
+        return {
+            "dev_mode": settings.dev_mode,
+            "project_id": settings.project_id,
+            "region": settings.region,
+            "cluster": settings.cluster,
+            "instance": settings.instance,
+            "database": settings.database,
+            "embedding_model": settings.embedding_model,
+        }
+
     @app.get("/")
     async def root():
         try:
@@ -104,7 +117,18 @@ def create_rest_app(client=None, action_registry=None):
             from server.dashboard_runtime import get_dashboard_payload
 
             settings = getattr(app.state, "settings", None)
-            return await get_dashboard_payload(None, settings)
+            client_instance = None
+            live_error = None
+            try:
+                client_instance = await resolve_client()
+            except Exception as exc:  # pragma: no cover - depends on environment
+                live_error = str(exc)
+                logger.warning("Dashboard live client unavailable: %s", exc)
+            return await get_dashboard_payload(
+                client_instance,
+                settings,
+                live_error=live_error,
+            )
         except Exception as exc:
             logger.exception("Dashboard request failed.")
             raise HTTPException(status_code=400, detail=str(exc)) from exc

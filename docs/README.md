@@ -1,17 +1,28 @@
-<!--
-This directory will hold the human-readable documentation set for AlloyNative.
-It should explain the problem, architecture, SDK usage, deployment path,
-design decisions, and submission story in a way judges and developers can scan quickly.
--->
+# Documentation Index
 
-<!--
-Recommended reading order for implementers:
-1. LEARNINGS.md for the product thesis and technical constraints.
-2. phase1_connection_confirmed.md for the real connection truth we must build against.
-3. ml_integration_research_notes.md for extension and model-management notes that still need direct verification.
-4. cluster_snapshot.md for the exact validated cluster state before teardown.
-5. build_order.md for the exact first files to implement.
-6. api_examples.md for concrete domain payloads and demo-ready requests.
-7. filter_behavior.md for the v1 filter ruleset.
-8. architecture.md for the end-to-end system story.
--->
+This directory contains the operational and technical documentation for AlloyNative.
+
+Recommended reading order:
+
+1. [architecture.md](c:\Users\shree\google_submission\p1\docs\architecture.md)
+   System structure, request flow, and design rationale.
+2. [phase1_connection_confirmed.md](c:\Users\shree\google_submission\p1\docs\phase1_connection_confirmed.md)
+   Verified AlloyDB connection model, IAM requirements, and baseline validation steps.
+3. [alloydb_results_summary.md](c:\Users\shree\google_submission\p1\docs\alloydb_results_summary.md)
+   Summary of live AlloyDB results collected during validation.
+4. [server.md](c:\Users\shree\google_submission\p1\docs\server.md)
+   REST server structure, runtime modes, and exposed interfaces.
+5. [deployment.md](c:\Users\shree\google_submission\p1\docs\deployment.md)
+   Local and Cloud Run deployment guidance.
+6. [api_examples.md](c:\Users\shree\google_submission\p1\docs\api_examples.md)
+   Example request payloads for common use cases.
+7. [filter_behavior.md](c:\Users\shree\google_submission\p1\docs\filter_behavior.md)
+   Supported filter syntax and query semantics.
+
+Supporting references:
+
+- [cluster_snapshot.md](c:\Users\shree\google_submission\p1\docs\cluster_snapshot.md)
+- [live_comparison_checklist.md](c:\Users\shree\google_submission\p1\docs\live_comparison_checklist.md)
+- [pinecone_results_summary.md](c:\Users\shree\google_submission\p1\docs\pinecone_results_summary.md)
+- [python_sdk.md](c:\Users\shree\google_submission\p1\docs\python_sdk.md)
+- [typescript_sdk.md](c:\Users\shree\google_submission\p1\docs\typescript_sdk.md)

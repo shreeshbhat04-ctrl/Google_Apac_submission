@@ -371,6 +371,7 @@ button.action:disabled{
     <div class="tag">Live Demo Guide</div>
     <div class="meta" id="regionMeta">Region --</div>
     <div class="meta" id="clusterMeta">Cluster --</div>
+    <div class="meta" id="instanceMeta">Instance --</div>
     <div class="spacer"></div>
     <div class="meta" id="modeMeta">Mode --</div>
   </div>
@@ -484,6 +485,7 @@ button.action:disabled{
           <div>Project <strong id="projectMeta">--</strong></div>
           <div>Database <strong id="databaseMeta">--</strong></div>
           <div>Index <strong id="indexMeta">--</strong></div>
+          <div>Connection <strong id="connectionMeta">--</strong></div>
           <div>Last Run <strong id="lastRunMeta">none</strong></div>
         </div>
         <div class="footer-actions">
@@ -498,8 +500,12 @@ button.action:disabled{
 </div>
 
 <script>
-const state={dashboard:null,currentScenario:null,currentPage:"context"};
+const state={dashboard:null,currentScenario:null,currentPage:"context",autoRunTriggered:false};
 const pages=["context","capabilities","evidence"];
+
+function isLocalHost(){
+  return ["localhost","127.0.0.1"].includes(window.location.hostname);
+}
 
 function setError(message=""){
   const el=document.getElementById("errorBanner");
@@ -515,10 +521,12 @@ function renderDashboard(data){
 
   document.getElementById("regionMeta").textContent=`Region ${data.header.region}`;
   document.getElementById("clusterMeta").textContent=`Cluster ${data.header.cluster}`;
+  document.getElementById("instanceMeta").textContent=`Instance ${data.header.instance}`;
   document.getElementById("modeMeta").textContent=`Mode ${data.header.connection_mode}`;
   document.getElementById("projectMeta").textContent=data.header.project_id;
   document.getElementById("databaseMeta").textContent=data.header.database;
   document.getElementById("indexMeta").textContent=data.capabilities.preferred_index_type || "ivfflat";
+  document.getElementById("connectionMeta").textContent=data.live_runtime.connected ? "Live" : "Guide Only";
 
   document.getElementById("scenarioList").innerHTML=data.scenarios.map((scenario)=>`
     <div class="scenario-card ${scenario.id===state.currentScenario?"active":""}" data-scenario="${scenario.id}">
@@ -551,6 +559,10 @@ function renderDashboard(data){
     {
       title:"Hybrid Search Baseline",
       body:"The demo remains usable even if optional rerank is unavailable."
+    },
+    {
+      title:"Runtime Target",
+      body:`${data.header.region} / ${data.header.cluster} / ${data.header.instance}`
     }
   ].map((item)=>`
     <div class="capability-card">
@@ -595,13 +607,27 @@ function renderScenario(){
     "Connects to live AlloyDB and validates pgvector capability at runtime.",
     "Runs in-database embeddings and hybrid retrieval without moving data into a separate vector service.",
     "Uses live relational state to change result eligibility immediately.",
-    "Keeps the demo usable even when optional LLM rerank is not available."
+    "Keeps the demo usable even when optional LLM rerank is not available.",
+    `Configured DB user: ${state.dashboard.live_runtime.db_user || "not set"}`,
+    `IP type: ${String(state.dashboard.live_runtime.ip_type || "unknown").toUpperCase()}`
   ].map((item)=>`
     <div class="result-card">
       <strong>Capability</strong>
       <p>${item}</p>
     </div>
   `).join("");
+
+  document.getElementById("platformResults").innerHTML += state.dashboard.live_runtime.connected ? `
+    <div class="result-card">
+      <strong>Live Runtime</strong>
+      <p>Connected to AlloyDB using embedding model <strong>${state.dashboard.live_runtime.embedding_model}</strong> and rerank model <strong>${state.dashboard.live_runtime.rerank_model}</strong>.</p>
+    </div>
+  ` : `
+    <div class="result-card">
+      <strong>Live Runtime</strong>
+      <p>Dashboard is readable, but the live AlloyDB client is unavailable right now.${state.dashboard.live_runtime.error ? `<br>${state.dashboard.live_runtime.error}` : ""}</p>
+    </div>
+  `;
 
   document.getElementById("resultList").innerHTML=`
     <div class="result-card">
@@ -620,11 +646,18 @@ function renderScenario(){
         <p>${item}</p>
       </div>
     `).join("")}
+    <div class="result-card">
+      <strong>Runtime Target</strong>
+      <p>Project ${state.dashboard.header.project_id}, cluster ${state.dashboard.header.cluster}, instance ${state.dashboard.header.instance}, database ${state.dashboard.header.database}.</p>
+    </div>
   `;
 
-  document.getElementById("terminal").innerHTML=`
+  document.getElementById("terminal").innerHTML=state.dashboard.live_runtime.connected ? `
+    <div class="terminal-card ok"><span>Live AlloyDB client is connected for this session.</span></div>
+    <div class="terminal-card dim"><span>Use Run Live Test to fetch fresh cluster-backed results for ${scenario.domain.toLowerCase()}.</span></div>
+  ` : `
     <div class="terminal-card dim"><span>Stored evidence is loaded by default so the guide is readable even before a live run.</span></div>
-    <div class="terminal-card dim"><span>Use Run Live Test only when you want a fresh cluster-backed execution for ${scenario.domain.toLowerCase()}.</span></div>
+    <div class="terminal-card warn"><span>Live AlloyDB is not connected yet.${state.dashboard.live_runtime.error ? ` ${state.dashboard.live_runtime.error}` : ""}</span></div>
   `;
 
   setPage(state.currentPage);
@@ -673,15 +706,19 @@ async function loadDashboard(){
     if(!response.ok)throw new Error(`Dashboard load failed: ${response.status}`);
     const data=await response.json();
     renderDashboard(data);
+    if(data.live_runtime.connected && isLocalHost() && !state.autoRunTriggered){
+      state.autoRunTriggered=true;
+      await runScenario({auto:true});
+    }
   }catch(error){
     setError(error.message);
   }
 }
 
-async function runScenario(){
+async function runScenario(options={}){
   const btn=document.getElementById("runBtn");
   btn.disabled=true;
-  btn.textContent="Running...";
+  btn.textContent=options.auto ? "Loading Live..." : "Running...";
   setPage("evidence");
   try{
     setError("");

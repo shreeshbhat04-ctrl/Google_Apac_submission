@@ -110,13 +110,19 @@ SCENARIOS = [
 ]
 
 
-async def get_dashboard_payload(client: Any | None, settings: Any) -> dict[str, Any]:
+async def get_dashboard_payload(
+    client: Any | None,
+    settings: Any,
+    *,
+    live_error: str | None = None,
+) -> dict[str, Any]:
     capabilities = getattr(client, "capabilities", None) if client is not None else None
     return {
         "header": {
             "project_id": getattr(settings, "project_id", "unknown"),
             "region": getattr(settings, "region", "unknown"),
             "cluster": getattr(settings, "cluster", "unknown"),
+            "instance": getattr(settings, "instance", "unknown"),
             "database": getattr(settings, "database", "unknown"),
             "connection_mode": "LIVE" if not getattr(settings, "dev_mode", False) else "DEV",
         },
@@ -140,6 +146,12 @@ async def get_dashboard_payload(client: Any | None, settings: Any) -> dict[str, 
         "live_runtime": {
             "dashboard_source": "stored" if client is None else "live",
             "run_test_available": True,
+            "connected": client is not None,
+            "error": live_error,
+            "db_user": getattr(settings, "db_user", None),
+            "ip_type": getattr(getattr(settings, "ip_type", None), "value", str(getattr(settings, "ip_type", "unknown"))),
+            "embedding_model": getattr(settings, "embedding_model", "unknown"),
+            "rerank_model": getattr(settings, "rerank_model", "unknown"),
         },
     }
 

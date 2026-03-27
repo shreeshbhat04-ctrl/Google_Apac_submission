@@ -1,16 +1,30 @@
-# AlloyDB Results Summary
+# AlloyDB Validation Summary
 
-## Live SDK Proof: Completed
+## Scope
 
-Environment:
+This document records the live AlloyDB validation work completed for AlloyNative and the current status of the demonstration environment.
+
+Validated environment:
+
 - project: `mystical-app-490317-v0`
 - region: `us-east4`
 - cluster: `mytest`
 - instance: `mytest-primary`
 - database: `my_application_db`
-- db user: `shreeshbhat04@gmail.com`
+- primary interactive user: `shreeshbhat04@gmail.com`
 
-Expected success signal:
+## Completed Validation
+
+### 1. SDK connectivity
+
+Verified through the Python SDK:
+
+- AlloyDB connector authentication succeeded
+- capability detection returned a valid snapshot
+- embeddings were generated in-database
+- a seeded product row was retrieved through `AlloyIndex.query(...)`
+
+Representative output:
 
 ```text
 Capabilities: CapabilitySnapshot(has_pgvector=True, has_scann=False, preferred_index_type='ivfflat')
@@ -25,130 +39,57 @@ SearchResult(
 )
 ```
 
-What success means:
-- live AlloyDB connection works through the SDK
-- IAM auth works with the AlloyDB connector
-- environment validation passes
-- capability detection works
-- `products` row upsert works
-- in-database embedding generation works
-- live hybrid query returns a result through `AlloyIndex`
+### 2. Join-aware retrieval
 
-This is the first full live proof that AlloyNative is not just locally scaffolded, but operational against a real AlloyDB instance.
+Verified against live AlloyDB tables with an inventory join.
 
-## Live Join-Aware Retrieval: Completed
+Observed behavior:
 
-Expected success signal for the clean demo path:
+- results were present when the join predicate matched current inventory state
+- results were removed when the same item became ineligible under the join predicate
 
-```text
-Positive join result count: 1
-...
-Negative join result count: 0
-```
+This confirms that result eligibility can be controlled by live relational state without re-upserting vector metadata.
 
-What success means:
-- the join-aware query path executes successfully against live AlloyDB
-- the result set is constrained by live relational state, not just the vector row
-- when inventory satisfies `stock__gt: 0`, the matching product is eligible
-- when inventory is set to `0`, that same product becomes ineligible without any vector re-upsert
+### 3. Fabricated live demos
 
-This is the key negative-case demonstration for the AlloyNative moat:
-- same product row
-- same semantic query
-- live SQL join condition changes eligibility
-- no separate vector-store re-upsert is needed
+The project includes live-seeded demo workflows for screenshot and walkthrough purposes:
 
-Note:
-- during exploratory live runs, pre-existing seeded rows in `products` and `inventory` could make the raw counts larger than the ideal `1 -> 0` transition
-- the success criterion for the polished scripted demo is the behavior change itself: rows appear when the join predicate matches and disappear when it does not
+- [cymbal_shops_demo.py](c:\Users\shree\google_submission\p1\demo\cymbal_shops_demo.py)
+- [fraud_workflow_demo.py](c:\Users\shree\google_submission\p1\demo\fraud_workflow_demo.py)
 
-## Fabricated Demo Completion
+These scripts create required tables if needed, seed deterministic demo rows, and exercise the same AlloyDB-backed query path used by the SDK and server.
 
-To keep the project runnable even when `google_ml.predict_row(...)` is not fully configured for a chosen model, the demo layer now uses fabricated rows and a graceful fallback path:
+## Rerank Status
 
-- [demo/cymbal_shops_demo.py](c:\Users\shree\google_submission\p1\demo\cymbal_shops_demo.py)
-  creates the `products` and `inventory` tables if needed, seeds fabricated rows, and demonstrates both positive and negative join-aware retrieval.
-- [demo/fraud_workflow_demo.py](c:\Users\shree\google_submission\p1\demo\fraud_workflow_demo.py)
-  creates the `transactions` table if needed, seeds fabricated rows, attempts reranking with `ALLOYNATIVE_RERANK_MODEL`, and falls back to hybrid-only search if the model is unavailable.
+Hybrid retrieval is the production baseline.
 
-This keeps the submission demoable end to end while preserving the live AlloyDB integration for embeddings and hybrid search.
+Reranking remains environment-dependent because `google_ml.predict_row(...)` requires a supported model configuration in the connected cluster. The current demos handle this by:
 
-## Steps That Got Us Here
+- attempting rerank when configured
+- falling back to hybrid-only search when rerank is unavailable
 
-1. Created a live AlloyDB cluster and primary instance in `us-east4`
-2. Enabled the required extensions and validated model support
-3. Created `my_application_db`
-4. Created the `products` table using [products_schema.sql](c:\Users\shree\google_submission\p1\sql\products_schema.sql)
-5. Fixed SDK issues discovered during live testing:
-   - string `ip_type` normalization
-   - JSONB serialization for `upsert_rows(...)`
-6. Ran [sdk_live_smoke.py](c:\Users\shree\google_submission\p1\demo\sdk_live_smoke.py) from Cloud Shell
+This keeps the demo path stable without misrepresenting model availability.
 
-## What To Test Next
+## Implementation Changes Confirmed During Validation
 
-### 1. Join-aware retrieval
+The following runtime issues were identified and corrected during live testing:
 
-Create the join table:
-
-```sql
-CREATE TABLE IF NOT EXISTS inventory (
-    product_id BIGINT PRIMARY KEY,
-    stock INTEGER NOT NULL,
-    warehouse VARCHAR(100),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-INSERT INTO inventory (product_id, stock, warehouse)
-VALUES (1, 5, 'east')
-ON CONFLICT (product_id) DO UPDATE SET
-    stock = EXCLUDED.stock,
-    warehouse = EXCLUDED.warehouse,
-    updated_at = NOW();
-```
-
-Then update the SDK script to query with:
-
-```python
-join_table="inventory",
-left_join_column="id",
-right_join_column="product_id",
-join_filter={"stock__gt": 0},
-```
-
-Record both outcomes:
-- positive case: `stock > 0` and the row appears
-- negative case: `stock = 0` or missing join row and `Result count: 0`
-
-### 2. Fraud / rerank proof
-
-Use [fraud_workflow_demo.py](c:\Users\shree\google_submission\p1\demo\fraud_workflow_demo.py).
-
-Expected success signal:
-- best case: the configured rerank model is ready and the script runs `query(..., rerank=True)` successfully
-- acceptable demo fallback: the script prints the rerank failure reason and still returns hybrid-search results
-
-This keeps the workflow demonstrable without blocking on model registration.
-
-### 3. REST proof
-
-Run the REST server against the live cluster and verify:
-- `POST /v1/upsert`
-- `POST /v1/search`
-- optional `POST /v1/actions/register`
-- optional `POST /v1/actions/execute`
-
-### 4. Comparison write-up
-
-Once the join and rerank proofs are done, compare AlloyDB against the Pinecone evidence in [pinecone_results_summary.md](c:\Users\shree\google_submission\p1\docs\pinecone_results_summary.md):
-- propagation/visibility
-- divergence risk
-- join-constrained retrieval
+- `ip_type` normalization for string environment values
+- JSONB serialization in `upsert_rows(...)`
+- local/demo environment cleanup for reliable live mode activation
+- REST dashboard behavior changed so the guide can load even if the live client is temporarily unavailable
 
 ## Current Status
 
-- Offline SDK/server/tests: done
-- Live AlloyDB SDK connect/upsert/search: done
-- Live join-aware retrieval: demonstrated through fabricated live rows
-- Live rerank proof: success path defined, hybrid fallback in place
-- Live REST proof: next
-- Cloud Run deployment proof: next
+- Offline SDK tests: complete
+- Offline server tests: complete
+- Live AlloyDB SDK connect/upsert/search: complete
+- Live join-aware retrieval: complete
+- Local REST dashboard backed by real environment values: complete
+- Cloud Run runtime connection path: still under validation
+
+## Recommended Next Steps
+
+1. Finalize Cloud Run connectivity for the runtime service account.
+2. Capture screenshot-ready evidence from the local dashboard using live scenario runs.
+3. Complete the Pinecone comparison write-up using the same scenario set and outcome format.

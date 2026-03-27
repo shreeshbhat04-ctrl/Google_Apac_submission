@@ -1,62 +1,70 @@
 # Architecture
 
-AlloyNative has four layers:
+## Overview
 
-1. SDK surface
+AlloyNative provides a Pinecone-compatible developer surface backed by AlloyDB. The system keeps embeddings, metadata filters, relational joins, and optional reranking inside the database execution path rather than splitting state across a transactional store and a separate vector store.
+
+## Core Layers
+
+1. SDK layer
+   Python and TypeScript clients expose `upsert`, `query`, and action-oriented workflows.
 2. SQL generation layer
-3. transport/runtime layer
+   Requests are translated into validated SQL with support for filters, joins, embeddings, and optional rerank operators.
+3. Runtime layer
+   The REST server and supporting adapters handle transport, configuration, and request lifecycle concerns.
 4. AlloyDB execution layer
+   AlloyDB executes SQL, generates embeddings through `google_ml.embedding(...)`, evaluates vector similarity, applies relational predicates, and can invoke `google_ml.predict_row(...)` when reranking is enabled.
 
-## End-To-End Flow
+## Request Flow
 
-Client code calls the SDK with:
-- rows to upsert
-- a search query
-- top-level SQL filters
-- optional join constraints against a related table
-- optional rerank settings
+### Upsert path
 
-The Python SDK then:
-- validates identifiers and filter operators
-- generates SQL that calls `google_ml.embedding(...)` inside AlloyDB
-- optionally constrains candidates with relational joins
-- optionally generates SQL that calls `google_ml.predict_row(...)`
+1. Client submits rows and identifies the source text column for embedding generation.
+2. AlloyNative validates table names, column names, and payload shape.
+3. SQL is generated to write source columns and call `google_ml.embedding(...)` in the same statement.
+4. AlloyDB stores relational columns and vectors in the same table.
 
-AlloyDB then becomes the place where:
-- embeddings are generated
-- vector similarity is computed
-- ordinary SQL filters are applied
-- related-table constraints are resolved with SQL joins
-- reranking can happen
+### Query path
 
-## Why This Matters
+1. Client submits a query string, filters, and optional join constraints.
+2. AlloyNative generates SQL for hybrid retrieval:
+   vector similarity via `pgvector`
+   full-text matching via PostgreSQL text search
+   reciprocal rank fusion for a combined baseline result set
+3. Optional join predicates constrain candidate eligibility using live relational data.
+4. Optional reranking invokes `google_ml.predict_row(...)` if a supported model is configured.
 
-The key advantage is that sensitive text can stay inside the database execution path.
+## Design Rationale
 
-That changes the developer experience from:
-- app -> model API -> app -> database
+The primary design objective is consistency. In common production deployments, operational truth lives in SQL while semantic retrieval lives in a separate vector system. That creates a propagation window in which search can return semantically relevant but operationally invalid rows. AlloyNative removes that split for supported workflows by executing the full retrieval path inside AlloyDB.
 
-to:
-- app -> database SQL -> model call inside AlloyDB
+## Runtime Components
 
-This is the core moat and the main product story for AlloyNative.
-
-The strongest empirical comparison point is the Pinecone divergence result captured in [pinecone_results_summary.md](c:\Users\shree\google_submission\p1\docs\pinecone_results_summary.md): Pinecone can reflect its own updates quickly and still be structurally stale when SQL remains the true source of business state.
-
-## Runtime Layers
-
-- Python SDK: canonical implementation with `AlloyDBClient` and `AlloyIndex`
-- TypeScript SDK: transport-facing wrapper around the same contract, including an `AlloyIndex` helper
-- REST server: primary demo and runtime path
-- gRPC adapter: optional shared-contract layer, not required for AlloyDB connectivity
-- MCP tools: thin wrappers over the same Python SDK operations
+- [main.py](c:\Users\shree\google_submission\p1\server\main.py)
+  FastAPI application entrypoint and process lifecycle.
+- [rest_routes.py](c:\Users\shree\google_submission\p1\server\rest_routes.py)
+  HTTP routes for dashboard, upsert, search, and actions.
+- [dependencies.py](c:\Users\shree\google_submission\p1\server\dependencies.py)
+  Environment-backed settings and client construction.
+- [sql.py](c:\Users\shree\google_submission\p1\py\alloynative\sql.py)
+  SQL construction logic for inserts, hybrid search, and rerank flows.
+- [client.py](c:\Users\shree\google_submission\p1\py\alloynative\client.py)
+  Core client implementation used by the SDK and server.
 
 ## Capability Detection
 
-After connecting, AlloyNative inspects installed extensions and exposes a capability snapshot:
+On connection, AlloyNative inspects the database environment and exposes a capability snapshot:
 
 - `has_pgvector`
 - `has_scann`
 - `preferred_index_type`
 
-This keeps the runtime AlloyDB-aware without making ScaNN a hard requirement.
+This allows the runtime to adapt to the connected AlloyDB instance without assuming optional extensions are present.
+
+## Operational Characteristics
+
+- Single-system storage for relational and vector data
+- IAM-compatible AlloyDB connector path
+- Hybrid retrieval as the baseline execution model
+- Join-aware eligibility control using live SQL state
+- Optional rerank path that degrades cleanly when a model is unavailable
